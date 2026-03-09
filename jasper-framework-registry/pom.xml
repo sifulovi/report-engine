@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.jasperframework</groupId>
+        <artifactId>jasper-framework</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>jasper-framework-registry</artifactId>
+    <name>Jasper Framework :: Registry</name>
+    <description>Dynamic report registry — report definitions, lookup, and subreport management.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-core</artifactId>
+        </dependency>
+    </dependencies>
+</project>
