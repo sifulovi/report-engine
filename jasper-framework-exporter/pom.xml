@@ -25,7 +25,7 @@
         </dependency>
         <dependency>
             <groupId>net.sf.jasperreports</groupId>
-            <artifactId>jasperreports-xlsx</artifactId>
+            <artifactId>jasperreports-excel-poi</artifactId>
         </dependency>
     </dependencies>
 </project>

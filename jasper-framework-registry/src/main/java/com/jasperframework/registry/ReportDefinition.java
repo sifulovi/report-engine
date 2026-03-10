@@ -1,5 +1,7 @@
 package com.jasperframework.registry;
 
+import com.jasperframework.core.ExportFormat;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;

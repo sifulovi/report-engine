@@ -1,4 +1,4 @@
-package com.jasperframework.registry;
+package com.jasperframework.core;
 
 /**
  * Supported report export formats.
