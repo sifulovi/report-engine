@@ -1,0 +1,9 @@
+<jasperReport name="main" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="AllSectionsNoDetail">
+	<parameter name="title" class="java.lang.String"/>
+	<parameter name="ITEMS_SUBREPORT" class="net.sf.jasperreports.engine.JasperReport"/>
+	<title height="50">
+		<element kind="textField" x="0" y="0" width="500" height="30">
+			<expression><![CDATA[$P{title}]]></expression>
+		</element>
+	</title>
+</jasperReport>
