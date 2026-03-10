@@ -19,9 +19,11 @@
         <module>jasper-framework-metadata</module>
         <module>jasper-framework-composition</module>
         <module>jasper-framework-async</module>
+        <module>jasper-framework-storage</module>
         <module>jasper-framework-spring</module>
         <module>jasper-framework-jakarta</module>
         <module>jasper-framework-maven-plugin</module>
+        <module>jasper-framework-example</module>
     </modules>
 
     <properties>
@@ -98,6 +100,11 @@
             </dependency>
             <dependency>
                 <groupId>com.jasperframework</groupId>
+                <artifactId>jasper-framework-storage</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.jasperframework</groupId>
                 <artifactId>jasper-framework-spring</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -141,6 +148,16 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-configuration-processor</artifactId>
                 <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>6.2.1</version>
             </dependency>
 
             <!-- Jakarta CDI -->

@@ -1,6 +1,8 @@
 package com.jasperframework.core;
 
 import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRParameter;
+import net.sf.jasperreports.engine.JRVirtualizer;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
@@ -31,6 +33,14 @@ public class ReportExecutor {
 
         JasperReport report = template.getCompiledReport();
         Map<String, Object> params = new HashMap<>(context.getParameters());
+
+        JRVirtualizer virtualizer = null;
+        if (context.hasVirtualizer()) {
+            virtualizer = VirtualizerFactory.create(context.getVirtualizerConfig());
+            params.put(JRParameter.REPORT_VIRTUALIZER, virtualizer);
+            log.debug("Using {} virtualizer for report: {}",
+                    context.getVirtualizerConfig().getType(), template.getTemplatePath());
+        }
 
         try {
             JasperPrint print;

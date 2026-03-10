@@ -76,9 +76,63 @@ public class ExportService {
     }
 
     /**
+     * Exports a specific page range of the filled report to the given output stream.
+     * <p>
+     * Creates a shallow copy of the {@link JasperPrint} containing only the
+     * requested pages, then delegates to the standard export pipeline.
+     *
+     * @param print     the filled report
+     * @param format    desired export format
+     * @param output    destination stream
+     * @param pageRange page range to export
+     */
+    public void export(JasperPrint print, ExportFormat format, OutputStream output, PageRange pageRange) {
+        if (pageRange == null || pageRange.isAll()) {
+            export(print, format, output);
+            return;
+        }
+        JasperPrint sliced = slicePages(print, pageRange);
+        export(sliced, format, output);
+    }
+
+    /**
+     * Exports a specific page range and returns the result as a byte array.
+     */
+    public byte[] exportToBytes(JasperPrint print, ExportFormat format, PageRange pageRange) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        export(print, format, baos, pageRange);
+        return baos.toByteArray();
+    }
+
+    /**
      * Returns {@code true} if an exporter is registered for the given format.
      */
     public boolean supportsFormat(ExportFormat format) {
         return exporters.containsKey(format);
+    }
+
+    private JasperPrint slicePages(JasperPrint source, PageRange range) {
+        int totalPages = source.getPages().size();
+        int start = range.getStartPage();
+        int end = Math.min(range.getEndPage(), totalPages - 1);
+
+        if (start >= totalPages) {
+            throw new ReportExportException(
+                    "Start page " + start + " exceeds total pages " + totalPages);
+        }
+
+        log.debug("Slicing pages {}-{} from {} total pages", start, end, totalPages);
+
+        JasperPrint sliced = new JasperPrint();
+        sliced.setName(source.getName());
+        sliced.setPageWidth(source.getPageWidth());
+        sliced.setPageHeight(source.getPageHeight());
+        sliced.setOrientation(source.getOrientation());
+
+        for (int i = start; i <= end; i++) {
+            sliced.addPage(source.getPages().get(i));
+        }
+
+        return sliced;
     }
 }

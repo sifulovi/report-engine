@@ -19,12 +19,14 @@ public final class ReportContext {
     private final Map<String, Object> parameters;
     private final JRDataSource dataSource;
     private final Connection connection;
+    private final VirtualizerConfig virtualizerConfig;
 
     private ReportContext(Builder builder) {
         this.templatePath = builder.templatePath;
         this.parameters = Collections.unmodifiableMap(new HashMap<>(builder.parameters));
         this.dataSource = builder.dataSource;
         this.connection = builder.connection;
+        this.virtualizerConfig = builder.virtualizerConfig;
     }
 
     public String getTemplatePath() {
@@ -51,6 +53,14 @@ public final class ReportContext {
         return dataSource != null;
     }
 
+    public VirtualizerConfig getVirtualizerConfig() {
+        return virtualizerConfig;
+    }
+
+    public boolean hasVirtualizer() {
+        return virtualizerConfig != null;
+    }
+
     public static Builder builder(String templatePath) {
         return new Builder(templatePath);
     }
@@ -61,6 +71,7 @@ public final class ReportContext {
         private final Map<String, Object> parameters = new HashMap<>();
         private JRDataSource dataSource;
         private Connection connection;
+        private VirtualizerConfig virtualizerConfig;
 
         private Builder(String templatePath) {
             if (templatePath == null || templatePath.isBlank()) {
@@ -88,6 +99,11 @@ public final class ReportContext {
 
         public Builder connection(Connection connection) {
             this.connection = connection;
+            return this;
+        }
+
+        public Builder virtualizer(VirtualizerConfig virtualizerConfig) {
+            this.virtualizerConfig = virtualizerConfig;
             return this;
         }
 

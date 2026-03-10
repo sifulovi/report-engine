@@ -102,4 +102,37 @@ class ExportServiceTest {
         exportService.register(custom);
         assertThat(exportService.getExporter(ExportFormat.PDF)).isSameAs(custom);
     }
+
+    @Test
+    void exportToBytes_withPageRangeAll_exportsAllPages() {
+        byte[] full = exportService.exportToBytes(filledReport, ExportFormat.PDF);
+        byte[] allRange = exportService.exportToBytes(filledReport, ExportFormat.PDF, PageRange.all());
+
+        // PDFs contain unique IDs per export, so compare size not exact bytes
+        assertThat(allRange).hasSameSizeAs(full);
+        assertThat(allRange[0]).isEqualTo((byte) '%');
+    }
+
+    @Test
+    void exportToBytes_withSinglePage_producesOutput() {
+        byte[] page = exportService.exportToBytes(filledReport, ExportFormat.PDF, PageRange.single(0));
+        assertThat(page).isNotEmpty();
+        assertThat(page[0]).isEqualTo((byte) '%');
+    }
+
+    @Test
+    void exportToBytes_withNullPageRange_exportsAll() {
+        byte[] full = exportService.exportToBytes(filledReport, ExportFormat.PDF);
+        byte[] nullRange = exportService.exportToBytes(filledReport, ExportFormat.PDF, null);
+
+        assertThat(nullRange).hasSameSizeAs(full);
+    }
+
+    @Test
+    void exportToBytes_startPageBeyondTotal_throws() {
+        assertThatThrownBy(() ->
+                exportService.exportToBytes(filledReport, ExportFormat.PDF, PageRange.of(999, 1000)))
+                .isInstanceOf(ReportExportException.class)
+                .hasMessageContaining("exceeds total pages");
+    }
 }

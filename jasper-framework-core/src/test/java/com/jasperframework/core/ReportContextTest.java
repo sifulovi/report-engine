@@ -52,4 +52,22 @@ class ReportContextTest {
         assertThatThrownBy(() -> ReportContext.builder(null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void builder_shouldAcceptVirtualizerConfig() {
+        VirtualizerConfig config = VirtualizerConfig.gzip(20);
+        ReportContext ctx = ReportContext.builder("reports/test.jrxml")
+                .virtualizer(config)
+                .build();
+
+        assertThat(ctx.hasVirtualizer()).isTrue();
+        assertThat(ctx.getVirtualizerConfig()).isSameAs(config);
+    }
+
+    @Test
+    void builder_withoutVirtualizer_hasVirtualizerIsFalse() {
+        ReportContext ctx = ReportContext.builder("reports/test.jrxml").build();
+        assertThat(ctx.hasVirtualizer()).isFalse();
+        assertThat(ctx.getVirtualizerConfig()).isNull();
+    }
 }

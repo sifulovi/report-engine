@@ -27,3 +27,21 @@ CREATE TABLE report_subreports (
     template_path   VARCHAR(500) NOT NULL,
     CONSTRAINT fk_sub_report FOREIGN KEY (report_code) REFERENCES reports(code)
 );
+
+CREATE TABLE report_queries (
+    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    report_code   VARCHAR(50) NOT NULL,
+    name          VARCHAR(100) NOT NULL,
+    query_text    TEXT NOT NULL,
+    sort_order    INT DEFAULT 0,
+    CONSTRAINT fk_query_report FOREIGN KEY (report_code) REFERENCES reports(code)
+);
+
+CREATE TABLE report_permissions (
+    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    report_code   VARCHAR(50) NOT NULL,
+    role_name     VARCHAR(100) NOT NULL,
+    can_view      BOOLEAN DEFAULT TRUE,
+    can_export    BOOLEAN DEFAULT TRUE,
+    CONSTRAINT fk_perm_report FOREIGN KEY (report_code) REFERENCES reports(code)
+);
