@@ -1,0 +1,62 @@
+<jasperReport name="invoice" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="AllSectionsNoDetail">
+	<parameter name="invoiceNumber" class="java.lang.String"/>
+	<parameter name="customerName" class="java.lang.String"/>
+	<parameter name="invoiceDate" class="java.lang.String"/>
+	<parameter name="totalAmount" class="java.lang.String"/>
+	<field name="item" class="java.lang.String"/>
+	<field name="quantity" class="java.lang.Integer"/>
+	<field name="unitPrice" class="java.lang.Double"/>
+	<field name="lineTotal" class="java.lang.Double"/>
+	<title height="80">
+		<element kind="staticText" x="0" y="0" width="555" height="30" fontSize="18.0" bold="true" hTextAlign="Center">
+			<text><![CDATA[INVOICE]]></text>
+		</element>
+		<element kind="textField" x="0" y="35" width="275" height="20">
+			<expression><![CDATA["Invoice #: " + $P{invoiceNumber}]]></expression>
+		</element>
+		<element kind="textField" x="0" y="55" width="275" height="20">
+			<expression><![CDATA["Date: " + $P{invoiceDate}]]></expression>
+		</element>
+		<element kind="textField" x="280" y="35" width="275" height="20" hTextAlign="Right">
+			<expression><![CDATA["Customer: " + $P{customerName}]]></expression>
+		</element>
+	</title>
+	<columnHeader height="25">
+		<element kind="staticText" x="0" y="0" width="200" height="20" bold="true">
+			<text><![CDATA[Item]]></text>
+		</element>
+		<element kind="staticText" x="200" y="0" width="100" height="20" bold="true" hTextAlign="Right">
+			<text><![CDATA[Quantity]]></text>
+		</element>
+		<element kind="staticText" x="300" y="0" width="120" height="20" bold="true" hTextAlign="Right">
+			<text><![CDATA[Unit Price]]></text>
+		</element>
+		<element kind="staticText" x="420" y="0" width="135" height="20" bold="true" hTextAlign="Right">
+			<text><![CDATA[Total]]></text>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="20">
+			<element kind="textField" x="0" y="0" width="200" height="20">
+				<expression><![CDATA[$F{item}]]></expression>
+			</element>
+			<element kind="textField" x="200" y="0" width="100" height="20" hTextAlign="Right">
+				<expression><![CDATA[$F{quantity}]]></expression>
+			</element>
+			<element kind="textField" x="300" y="0" width="120" height="20" hTextAlign="Right" pattern="$#,##0.00">
+				<expression><![CDATA[$F{unitPrice}]]></expression>
+			</element>
+			<element kind="textField" x="420" y="0" width="135" height="20" hTextAlign="Right" pattern="$#,##0.00">
+				<expression><![CDATA[$F{lineTotal}]]></expression>
+			</element>
+		</band>
+	</detail>
+	<summary height="30">
+		<element kind="staticText" x="300" y="5" width="120" height="20" bold="true" hTextAlign="Right">
+			<text><![CDATA[Grand Total:]]></text>
+		</element>
+		<element kind="textField" x="420" y="5" width="135" height="20" bold="true" hTextAlign="Right">
+			<expression><![CDATA["$" + $P{totalAmount}]]></expression>
+		</element>
+	</summary>
+</jasperReport>

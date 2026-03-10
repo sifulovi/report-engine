@@ -1,0 +1,8 @@
+server:
+  port: 8080
+
+jasper:
+  framework:
+    template-prefix: reports/
+    cache-enabled: true
+    async-thread-pool-size: 4

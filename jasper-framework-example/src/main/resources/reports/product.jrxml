@@ -1,0 +1,49 @@
+<jasperReport name="product" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="AllSectionsNoDetail">
+	<parameter name="reportTitle" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="sku" class="java.lang.String"/>
+	<field name="category" class="java.lang.String"/>
+	<field name="price" class="java.lang.Double"/>
+	<field name="stock" class="java.lang.Integer"/>
+	<title height="40">
+		<element kind="textField" x="0" y="0" width="555" height="30" fontSize="16.0" bold="true" hTextAlign="Center">
+			<expression><![CDATA[$P{reportTitle}]]></expression>
+		</element>
+	</title>
+	<columnHeader height="25">
+		<element kind="staticText" x="0" y="0" width="150" height="20" bold="true">
+			<text><![CDATA[Product Name]]></text>
+		</element>
+		<element kind="staticText" x="150" y="0" width="100" height="20" bold="true">
+			<text><![CDATA[SKU]]></text>
+		</element>
+		<element kind="staticText" x="250" y="0" width="120" height="20" bold="true">
+			<text><![CDATA[Category]]></text>
+		</element>
+		<element kind="staticText" x="370" y="0" width="90" height="20" bold="true" hTextAlign="Right">
+			<text><![CDATA[Price]]></text>
+		</element>
+		<element kind="staticText" x="460" y="0" width="95" height="20" bold="true" hTextAlign="Right">
+			<text><![CDATA[Stock]]></text>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="20">
+			<element kind="textField" x="0" y="0" width="150" height="20">
+				<expression><![CDATA[$F{name}]]></expression>
+			</element>
+			<element kind="textField" x="150" y="0" width="100" height="20">
+				<expression><![CDATA[$F{sku}]]></expression>
+			</element>
+			<element kind="textField" x="250" y="0" width="120" height="20">
+				<expression><![CDATA[$F{category}]]></expression>
+			</element>
+			<element kind="textField" x="370" y="0" width="90" height="20" hTextAlign="Right" pattern="$#,##0.00">
+				<expression><![CDATA[$F{price}]]></expression>
+			</element>
+			<element kind="textField" x="460" y="0" width="95" height="20" hTextAlign="Right">
+				<expression><![CDATA[$F{stock}]]></expression>
+			</element>
+		</band>
+	</detail>
+</jasperReport>
