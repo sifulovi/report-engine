@@ -50,6 +50,7 @@
         <mockito.version>5.14.2</mockito.version>
         <assertj.version>3.27.2</assertj.version>
         <h2.version>2.3.232</h2.version>
+        <awaitility.version>4.2.2</awaitility.version>
 
         <!-- Maven Plugin -->
         <maven-plugin-api.version>3.9.9</maven-plugin-api.version>
@@ -152,6 +153,13 @@
                 <groupId>jakarta.annotation</groupId>
                 <artifactId>jakarta.annotation-api</artifactId>
                 <version>${jakarta.annotation.version}</version>
+            </dependency>
+
+            <!-- Awaitility (test only) -->
+            <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
             </dependency>
 
             <!-- H2 (test only) -->
