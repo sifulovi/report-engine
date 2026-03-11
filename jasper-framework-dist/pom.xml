@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.jasperframework</groupId>
+        <artifactId>jasper-framework</artifactId>
+        <version>1.0.1</version>
+    </parent>
+
+    <artifactId>jasper-framework-dist</artifactId>
+    <packaging>pom</packaging>
+    <name>Jasper Framework :: Distribution</name>
+    <description>Bundles all framework JARs + dependencies into a downloadable ZIP for manual usage.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-registry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-exporter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-metadata</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-composition</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-async</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-storage</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-spring</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jasperframework</groupId>
+            <artifactId>jasper-framework-jakarta</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version>
+                <executions>
+                    <execution>
+                        <id>dist-with-deps</id>
+                        <phase>package</phase>
+                        <goals><goal>single</goal></goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/assembly/dist.xml</descriptor>
+                            </descriptors>
+                            <finalName>jasper-framework-${project.version}</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

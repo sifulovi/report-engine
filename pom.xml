@@ -53,6 +53,7 @@
         <module>jasper-framework-jakarta</module>
         <module>jasper-framework-maven-plugin</module>
         <module>jasper-framework-example</module>
+        <module>jasper-framework-dist</module>
     </modules>
 
     <properties>

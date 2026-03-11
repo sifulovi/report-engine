@@ -566,6 +566,459 @@ public class JasperProducer {
 
 ---
 
+## 4.1 📥 Using JARs Manually (Without Maven/Gradle)
+
+If your project doesn't use a build tool, or you prefer to manage JARs manually, you can download pre-built JARs from the [GitHub Releases](https://github.com/sifulovi/report-engine/releases) page.
+
+### What's available on each release
+
+| Download | What's inside |
+|---|---|
+| `jasper-framework-<version>.zip` | **All JARs + all dependencies** in a single ZIP. Extract and add to classpath. |
+| `jasper-framework-core-<version>.jar` | Individual module JAR (no dependencies). You manage transitive deps yourself. |
+| `jasper-framework-exporter-<version>.jar` | Individual module JAR |
+| `jasper-framework-composition-<version>.jar` | Individual module JAR |
+| ... | One JAR per module |
+
+> 💡 **Recommendation:** Download the **full ZIP** (`jasper-framework-<version>.zip`). It includes everything you need in one package — framework JARs + JasperReports + all transitive dependencies.
+
+### Step-by-step setup
+
+#### 1. Download and extract
+
+```bash
+# Download from GitHub Releases
+wget https://github.com/sifulovi/report-engine/releases/download/v1.0.1/jasper-framework-1.0.1.zip
+
+# Extract
+unzip jasper-framework-1.0.1.zip
+```
+
+After extraction you'll see:
+```
+jasper-framework-1.0.1/
+├── lib/
+│   ├── jasper-framework-core-1.0.1.jar
+│   ├── jasper-framework-exporter-1.0.1.jar
+│   ├── jasper-framework-composition-1.0.1.jar
+│   ├── jasper-framework-async-1.0.1.jar
+│   ├── jasper-framework-spring-1.0.1.jar
+│   ├── jasper-framework-jakarta-1.0.1.jar
+│   ├── jasperreports-7.0.3.jar
+│   ├── jasperreports-pdf-7.0.3.jar
+│   ├── ... (all transitive dependencies)
+│   └── slf4j-api-2.0.16.jar
+├── LICENSE
+└── README.md
+```
+
+#### 2. Add to your project
+
+Copy the JARs you need to your project's `lib/` folder.
+
+---
+
+### Spring Boot application (manual JARs)
+
+#### Development setup
+
+**Project structure:**
+```
+my-spring-app/
+├── lib/                          ← paste JARs here
+│   ├── jasper-framework-core-1.0.1.jar
+│   ├── jasper-framework-exporter-1.0.1.jar
+│   ├── jasperreports-7.0.3.jar
+│   ├── jasperreports-pdf-7.0.3.jar
+│   └── ... (other deps from ZIP)
+├── src/
+│   ├── main/java/com/example/
+│   │   ├── MyApp.java
+│   │   ├── config/
+│   │   │   └── JasperConfig.java
+│   │   └── controller/
+│   │       └── ReportController.java
+│   └── main/resources/
+│       └── reports/
+│           └── invoice.jrxml
+└── pom.xml
+```
+
+**Add JARs to Maven as system-scoped dependencies** (if you still use Maven but don't want remote repos):
+
+```xml
+<dependencies>
+    <!-- Jasper Framework (from local lib/ folder) -->
+    <dependency>
+        <groupId>com.jasperframework</groupId>
+        <artifactId>jasper-framework-core</artifactId>
+        <version>1.0.1</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/lib/jasper-framework-core-1.0.1.jar</systemPath>
+    </dependency>
+    <dependency>
+        <groupId>com.jasperframework</groupId>
+        <artifactId>jasper-framework-exporter</artifactId>
+        <version>1.0.1</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/lib/jasper-framework-exporter-1.0.1.jar</systemPath>
+    </dependency>
+    <!-- Repeat for other framework JARs you need -->
+
+    <!-- JasperReports + its dependencies (also from lib/ folder) -->
+    <dependency>
+        <groupId>net.sf.jasperreports</groupId>
+        <artifactId>jasperreports</artifactId>
+        <version>7.0.3</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/lib/jasperreports-7.0.3.jar</systemPath>
+    </dependency>
+    <dependency>
+        <groupId>net.sf.jasperreports</groupId>
+        <artifactId>jasperreports-pdf</artifactId>
+        <version>7.0.3</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/lib/jasperreports-pdf-7.0.3.jar</systemPath>
+    </dependency>
+</dependencies>
+
+<!-- IMPORTANT: include system-scoped JARs in the final fat JAR -->
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <configuration>
+                <includeSystemScope>true</includeSystemScope>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+**Or install JARs to local Maven repo** (recommended — no system scope needed):
+
+```bash
+# Run this once — installs all JARs from lib/ to your local ~/.m2/repository
+# Then use normal <dependency> tags without system scope
+
+mvn install:install-file \
+  -Dfile=lib/jasper-framework-core-1.0.1.jar \
+  -DgroupId=com.jasperframework \
+  -DartifactId=jasper-framework-core \
+  -Dversion=1.0.1 \
+  -Dpackaging=jar
+
+mvn install:install-file \
+  -Dfile=lib/jasper-framework-exporter-1.0.1.jar \
+  -DgroupId=com.jasperframework \
+  -DartifactId=jasper-framework-exporter \
+  -Dversion=1.0.1 \
+  -Dpackaging=jar
+
+# Repeat for each framework JAR you need
+```
+
+After installing locally, use normal Maven dependencies:
+```xml
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-exporter</artifactId>
+    <version>1.0.1</version>
+</dependency>
+```
+
+**Configuration class:**
+
+```java
+@Configuration
+public class JasperConfig {
+
+    @Bean
+    public ReportEngine reportEngine() {
+        return new ReportEngine();
+    }
+
+    @Bean
+    public ExportService exportService() {
+        return new ExportService();
+    }
+}
+```
+
+**Controller:**
+
+```java
+@RestController
+@RequestMapping("/reports")
+public class ReportController {
+
+    @Autowired private ReportEngine engine;
+    @Autowired private ExportService exportService;
+
+    @GetMapping("/invoice/{id}")
+    public ResponseEntity<byte[]> invoice(@PathVariable Long id,
+            @RequestParam(defaultValue = "PDF") ExportFormat format) {
+
+        List<InvoiceItem> items = invoiceService.getItems(id);
+
+        ReportContext ctx = ReportContext.builder("reports/invoice.jrxml")
+                .parameter("invoiceNumber", "INV-" + id)
+                .parameter("customerName", "Acme Corp")
+                .dataSource(new JRBeanCollectionDataSource(items))
+                .build();
+
+        JasperPrint print = engine.generateReport(ctx);
+        byte[] bytes = exportService.exportToBytes(print, format);
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition",
+                        "attachment; filename=invoice." + format.name().toLowerCase())
+                .contentType(format == ExportFormat.PDF
+                        ? MediaType.APPLICATION_PDF
+                        : MediaType.APPLICATION_OCTET_STREAM)
+                .body(bytes);
+    }
+}
+```
+
+#### Production deployment
+
+For Spring Boot, production is simple — the fat JAR includes everything:
+
+```bash
+# Build the fat JAR (includes all libs)
+./mvnw clean package -DskipTests
+
+# Run
+java -jar target/my-spring-app-1.0.0.jar
+```
+
+No extra classpath setup needed. Spring Boot packages all JARs inside the fat JAR.
+
+---
+
+### JSF (Jakarta Faces) application (manual JARs)
+
+#### Development setup
+
+**Project structure:**
+```
+my-jsf-app/
+├── lib/                          ← paste JARs here
+│   ├── jasper-framework-core-1.0.1.jar
+│   ├── jasper-framework-exporter-1.0.1.jar
+│   ├── jasperreports-7.0.3.jar
+│   ├── jasperreports-pdf-7.0.3.jar
+│   └── ... (other deps from ZIP)
+├── src/main/
+│   ├── java/com/example/
+│   │   ├── producer/
+│   │   │   └── JasperProducer.java
+│   │   └── bean/
+│   │       └── InvoiceBean.java
+│   ├── resources/reports/
+│   │   └── invoice.jrxml
+│   └── webapp/
+│       ├── WEB-INF/
+│       │   ├── web.xml
+│       │   ├── beans.xml        ← required for CDI
+│       │   └── faces-config.xml
+│       └── invoice.xhtml
+└── pom.xml
+```
+
+**beans.xml** (must exist for CDI to work, can be empty):
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="https://jakarta.ee/xml/ns/jakartaee"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+           https://jakarta.ee/xml/ns/jakartaee/beans_4_0.xsd"
+       bean-discovery-mode="all">
+</beans>
+```
+
+**CDI Producer class** (creates the beans that can be @Inject-ed):
+```java
+package com.example.producer;
+
+import com.jasperframework.core.ReportEngine;
+import com.jasperframework.exporter.ExportService;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+
+@ApplicationScoped
+public class JasperProducer {
+
+    @Produces @ApplicationScoped
+    public ReportEngine reportEngine() {
+        return new ReportEngine();
+    }
+
+    @Produces @ApplicationScoped
+    public ExportService exportService() {
+        return new ExportService();
+    }
+}
+```
+
+**JSF Backing Bean:**
+```java
+package com.example.bean;
+
+import com.jasperframework.core.ExportFormat;
+import com.jasperframework.core.ReportContext;
+import com.jasperframework.core.ReportEngine;
+import com.jasperframework.exporter.ExportService;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.faces.context.FacesContext;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletResponse;
+import net.sf.jasperreports.engine.JasperPrint;
+
+import java.io.IOException;
+
+@Named
+@RequestScoped
+public class InvoiceBean {
+
+    @Inject private ReportEngine engine;
+    @Inject private ExportService exportService;
+
+    private Long invoiceId;
+
+    public void generatePdf() throws IOException {
+        ReportContext ctx = ReportContext.builder("reports/invoice.jrxml")
+                .parameter("invoiceId", invoiceId)
+                .build();
+
+        JasperPrint print = engine.generateReport(ctx);
+        byte[] pdf = exportService.exportToBytes(print, ExportFormat.PDF);
+
+        // Write PDF to HTTP response
+        FacesContext fc = FacesContext.getCurrentInstance();
+        HttpServletResponse response = (HttpServletResponse)
+                fc.getExternalContext().getResponse();
+        response.setContentType("application/pdf");
+        response.setContentLength(pdf.length);
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"invoice-" + invoiceId + ".pdf\"");
+        response.getOutputStream().write(pdf);
+        response.getOutputStream().flush();
+        fc.responseComplete();
+    }
+
+    // Getter/Setter for JSF binding
+    public Long getInvoiceId() { return invoiceId; }
+    public void setInvoiceId(Long invoiceId) { this.invoiceId = invoiceId; }
+}
+```
+
+**JSF page (invoice.xhtml):**
+```xml
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+<h:head>
+    <title>Invoice Report</title>
+</h:head>
+<h:body>
+    <h:form>
+        <h:outputLabel value="Invoice ID: " for="invoiceId"/>
+        <h:inputText id="invoiceId" value="#{invoiceBean.invoiceId}"/>
+
+        <h:commandButton value="Download PDF"
+                         action="#{invoiceBean.generatePdf()}"/>
+    </h:form>
+</h:body>
+</html>
+```
+
+#### Production deployment
+
+For JSF apps deployed to an application server (WildFly, Payara, TomEE):
+
+**Option 1: Bundle JARs inside WAR** (simplest)
+```
+my-jsf-app.war
+└── WEB-INF/
+    └── lib/
+        ├── jasper-framework-core-1.0.1.jar
+        ├── jasper-framework-exporter-1.0.1.jar
+        ├── jasperreports-7.0.3.jar
+        └── ... (all deps from ZIP)
+```
+
+Just copy everything from the downloaded `lib/` folder into your WAR's `WEB-INF/lib/`. Maven/Gradle does this automatically when you use `compile` scope.
+
+**Option 2: Shared library on app server** (recommended for multiple apps)
+
+Place JARs in the server's shared modules so all deployed apps can use them:
+
+```bash
+# WildFly / JBoss
+cp lib/*.jar $WILDFLY_HOME/modules/com/jasperframework/main/
+# + create module.xml (see WildFly docs)
+
+# Payara / GlassFish
+cp lib/*.jar $PAYARA_HOME/glassfish/domains/domain1/lib/
+
+# TomEE
+cp lib/*.jar $TOMEE_HOME/lib/
+```
+
+Then redeploy your WAR. The app server classloader picks up the JARs automatically.
+
+---
+
+### Plain Java application (no framework)
+
+For CLI tools, batch jobs, or standalone apps:
+
+```java
+import com.jasperframework.core.ExportFormat;
+import com.jasperframework.core.ReportContext;
+import com.jasperframework.core.ReportEngine;
+import com.jasperframework.exporter.ExportService;
+import net.sf.jasperreports.engine.JasperPrint;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+public class ReportGenerator {
+
+    public static void main(String[] args) throws Exception {
+        ReportEngine engine = new ReportEngine();
+        ExportService exportService = new ExportService();
+
+        ReportContext ctx = ReportContext.builder("reports/invoice.jrxml")
+                .parameter("invoiceNumber", "INV-001")
+                .parameter("customerName", "Acme Corp")
+                .build();
+
+        JasperPrint print = engine.generateReport(ctx);
+        byte[] pdf = exportService.exportToBytes(print, ExportFormat.PDF);
+
+        Files.write(Path.of("invoice.pdf"), pdf);
+        System.out.println("Report saved to invoice.pdf");
+    }
+}
+```
+
+**Compile and run:**
+```bash
+# Compile (all JARs from lib/ on classpath)
+javac -cp "lib/*" -d out src/ReportGenerator.java
+
+# Run
+java -cp "out:lib/*" ReportGenerator
+```
+
+---
+
 ## 5. 📝 JRXML Template Format (JR 7.x)
 
 > ⚠️ **Critical:** JasperReports 7.x uses a **completely different JRXML format** than 6.x. Templates written for 6.x **will not work**. This is the most common source of errors for new developers.
