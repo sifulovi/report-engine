@@ -23,6 +23,9 @@ jobs:
           distribution: temurin
           cache: maven
 
+      - name: Resolve dependencies (with retry)
+        run: ./mvnw dependency:resolve --batch-mode --no-transfer-progress || ./mvnw dependency:resolve --batch-mode --no-transfer-progress
+
       - name: Build and test
         run: ./mvnw clean verify --batch-mode --no-transfer-progress
 
