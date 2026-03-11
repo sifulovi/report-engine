@@ -6,7 +6,7 @@
 
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <packaging>pom</packaging>
 
     <name>Jasper Framework</name>
