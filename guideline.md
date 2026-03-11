@@ -152,7 +152,7 @@ For the simplest setup (core engine only):
 <dependency>
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework-core</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -162,7 +162,7 @@ If you also want PDF/XLSX/CSV export:
 <dependency>
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework-exporter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -245,39 +245,323 @@ Choose the modules you need. Every module declares its own transitive dependenci
 | Jakarta EE (all-in-one) | `jasper-framework-jakarta` | + core + registry + exporter |
 | Build-time compilation | `jasper-framework-maven-plugin` | JasperReports (standalone) |
 
-**All modules share groupId `com.jasperframework` and version `1.0.0-SNAPSHOT`.**
+**All modules share groupId `com.jasperframework` and version `1.0.0`.** Replace with the latest version from your local build or Maven repository.
 
-### Typical Spring Boot application
+### Two ways to use in Spring Boot
+
+You have **two options** when using Jasper Framework in a Spring Boot application:
+
+#### Option A: Use `jasper-framework-spring` (autoconfiguration)
+
+All beans are auto-registered. Zero configuration needed.
 
 ```xml
-<dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>com.jasperframework</groupId>
-            <artifactId>jasper-framework</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
-    </dependencies>
-</dependencyManagement>
-
-<dependencies>
-    <dependency>
-        <groupId>com.jasperframework</groupId>
-        <artifactId>jasper-framework-spring</artifactId>
-    </dependency>
-</dependencies>
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-spring</artifactId>
+    <version>1.0.0</version>
+</dependency>
 ```
 
-### Typical Jakarta EE application
+> **FAQ: "Won't this add duplicate Spring dependencies?"**
+> No. The Spring module declares Spring dependencies with `provided` scope — they are **not** included transitively. Your app's Spring Boot version controls everything at runtime. Zero duplicate JARs.
+>
+> **FAQ: "My app uses Spring Boot 4.x but the framework was compiled against 3.x — will it break?"**
+> Unlikely. The framework only uses stable Spring APIs (`@Configuration`, `@Bean`, `@ConditionalOnMissingBean`). The `provided` scope means your app's version wins at runtime. But if you want zero coupling to the Spring adapter module, use Option B.
+
+#### Option B: Pick individual modules + wire beans yourself
+
+Use this when you:
+- Only need specific modules (e.g., just composition, just export)
+- Want full control over bean creation
+- Want zero dependency on the Spring adapter module
+- Are on a Spring Boot version that might have breaking changes with the adapter
+
+**Example: I only need multi-report merging**
+
+```xml
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-composition</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+@Configuration
+public class JasperConfig {
+
+    @Bean
+    public ReportCompiler reportCompiler() {
+        return new ReportCompiler();
+    }
+
+    @Bean
+    public ReportExecutor reportExecutor() {
+        return new ReportExecutor();
+    }
+
+    @Bean
+    public ReportEngine reportEngine(ReportCompiler compiler, ReportExecutor executor) {
+        return new ReportEngine(compiler, executor);
+    }
+
+    @Bean
+    public ExportService exportService() {
+        return new ExportService();
+    }
+
+    @Bean
+    public ReportComposer reportComposer() {
+        return new ReportComposer();
+    }
+
+    @Bean
+    public ReportMergeService reportMergeService(ReportComposer composer,
+                                                  ExportService exportService) {
+        return new ReportMergeService(composer, exportService);
+    }
+}
+```
+
+**Example: I only need PDF/XLSX/CSV export**
+
+```xml
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-exporter</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+@Configuration
+public class JasperConfig {
+
+    @Bean
+    public ReportEngine reportEngine() {
+        return new ReportEngine();  // uses default compiler + executor
+    }
+
+    @Bean
+    public ExportService exportService() {
+        return new ExportService();
+    }
+}
+```
+
+**Example: I need async job processing**
+
+```xml
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-async</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+@Configuration
+public class JasperConfig {
+
+    @Bean
+    public ReportEngine reportEngine() {
+        return new ReportEngine();
+    }
+
+    @Bean
+    public ExportService exportService() {
+        return new ExportService();
+    }
+
+    @Bean
+    public ReportWorker reportWorker(ReportEngine engine, ExportService exportService) {
+        return new ReportWorker(engine, exportService);
+    }
+
+    @Bean(destroyMethod = "close")
+    public ReportJobService reportJobService(ReportWorker worker) {
+        return new ReportJobService(worker, 4);  // 4 threads
+    }
+}
+```
+
+**Example: I need metadata-driven reports**
+
+```xml
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-metadata</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+@Configuration
+public class JasperConfig {
+
+    @Bean
+    public ReportEngine reportEngine() {
+        return new ReportEngine();
+    }
+
+    @Bean
+    public ExportService exportService() {
+        return new ExportService();
+    }
+
+    @Bean
+    public ReportMetadataService reportMetadataService(DataSource dataSource,
+                                                        ReportEngine engine) {
+        return new ReportMetadataService(dataSource, engine, engine.getCompiler());
+    }
+}
+```
+
+> 💡 **Rule of thumb:** All framework classes have simple constructors — just `new` them and register as `@Bean`. Check the [API Reference](#18--api-reference) for constructor signatures.
+
+### Two ways to use in Jakarta EE
+
+Just like Spring Boot, you have two options:
+
+#### Option A: Use `jasper-framework-jakarta` (CDI auto-producers)
+
+All beans are auto-produced via CDI `@Produces`. Just `@Inject` and use.
 
 ```xml
 <dependency>
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework-jakarta</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
+```
+
+```java
+@Named
+@RequestScoped
+public class InvoiceBean {
+
+    @Inject private ReportEngine engine;
+    @Inject private ExportService exportService;
+
+    public byte[] generatePdf(long invoiceId) {
+        ReportContext ctx = ReportContext.builder("reports/invoice.jrxml")
+                .parameter("invoiceId", invoiceId)
+                .build();
+        JasperPrint print = engine.generateReport(ctx);
+        return exportService.exportToBytes(print, ExportFormat.PDF);
+    }
+}
+```
+
+#### Option B: Pick individual modules + create CDI producers yourself
+
+Use this when you only need specific modules (e.g., just composition, just export).
+
+> 💡 **Spring `@Bean` vs CDI `@Produces` — they do the same thing:**
+> - Spring: `@Configuration` class + `@Bean` methods → creates Spring beans
+> - CDI: `@ApplicationScoped` class + `@Produces` methods → creates CDI beans
+>
+> Both approaches register objects that can be `@Inject`-ed elsewhere. The only difference is the annotations.
+
+**Example: I only need multi-report merging**
+
+```xml
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-composition</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+
+@ApplicationScoped
+public class JasperProducer {
+
+    @Produces
+    @ApplicationScoped
+    public ReportCompiler reportCompiler() {
+        return new ReportCompiler();
+    }
+
+    @Produces
+    @ApplicationScoped
+    public ReportExecutor reportExecutor() {
+        return new ReportExecutor();
+    }
+
+    @Produces
+    @ApplicationScoped
+    public ReportEngine reportEngine() {
+        return new ReportEngine(reportCompiler(), reportExecutor());
+    }
+
+    @Produces
+    @ApplicationScoped
+    public ExportService exportService() {
+        return new ExportService();
+    }
+
+    @Produces
+    @ApplicationScoped
+    public ReportComposer reportComposer() {
+        return new ReportComposer();
+    }
+
+    @Produces
+    @ApplicationScoped
+    public ReportMergeService reportMergeService() {
+        return new ReportMergeService(reportComposer(), exportService());
+    }
+}
+```
+
+Then inject anywhere:
+
+```java
+@Named
+@RequestScoped
+public class FinancialReportBean {
+
+    @Inject private ReportEngine engine;
+    @Inject private ReportMergeService mergeService;
+
+    public byte[] generateFinancialPackage() {
+        JasperPrint balance = engine.generateReport(/* ... */);
+        JasperPrint income  = engine.generateReport(/* ... */);
+        return mergeService.mergeAndExport("Financial Report",
+                ExportFormat.PDF, balance, income);
+    }
+}
+```
+
+**Example: I only need PDF/XLSX/CSV export**
+
+```xml
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-exporter</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+@ApplicationScoped
+public class JasperProducer {
+
+    @Produces @ApplicationScoped
+    public ReportEngine reportEngine() {
+        return new ReportEngine();
+    }
+
+    @Produces @ApplicationScoped
+    public ExportService exportService() {
+        return new ExportService();
+    }
+}
 ```
 
 ---
@@ -1115,17 +1399,26 @@ byte[] preview = exportService.exportToBytes(print, ExportFormat.PDF, PageRange.
 
 ## 14. 🍃 Spring Boot Integration
 
-### Setup
+There are **two approaches** to using Jasper Framework in Spring Boot. Choose the one that fits your needs:
+
+| Approach | When to use | Dependency |
+|---|---|---|
+| **A: Autoconfiguration** | You want zero-config setup with all core beans | `jasper-framework-spring` |
+| **B: Manual wiring** | You only need specific modules, or want full control | Any individual module (e.g., `jasper-framework-exporter`) |
+
+> 📖 See [Section 4 — Maven Dependencies](#4--maven-dependencies) for detailed examples of both approaches with code.
+
+### Approach A: Autoconfiguration with `jasper-framework-spring`
 
 ```xml
 <dependency>
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework-spring</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
-### Auto-registered beans
+#### Auto-registered beans
 
 All `@ConditionalOnMissingBean` — you can override any of them:
 
@@ -1137,24 +1430,74 @@ All `@ConditionalOnMissingBean` — you can override any of them:
 - `ExportService`
 - `JasperFrameworkProperties`
 
-### Built-in REST endpoints
+When the **async module** is also on the classpath:
+- `ReportWorker`
+- `ReportJobService`
+
+#### Built-in REST endpoints
 
 When Spring Web is on the classpath, two endpoints are auto-registered:
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/reports/{code}?format=PDF` | Generate report by code |
-| `GET` | `/reports/job/{id}` | Check async job status |
+| `POST` | `/reports/{code}?format=PDF` | Generate report by code (parameters-only, no data source) |
+| `GET` | `/reports/job/{id}` | Check async job status (requires async module) |
 
 ```bash
-# Generate invoice as PDF
-curl -X POST "http://localhost:8080/reports/invoice?format=PDF&invoiceId=42" -o invoice.pdf
+# Generate a parameter-only report as PDF
+curl -X POST "http://localhost:8080/reports/summary?format=PDF&title=Monthly+Report" -o summary.pdf
 
-# Check job status
+# Check job status (only available when jasper-framework-async is on classpath)
 curl http://localhost:8080/reports/job/abc-123-def
 ```
 
-### Configuration
+> ⚠️ **Important:** The built-in `POST /reports/{code}` endpoint only passes query parameters to the report. It does **not** provide a data source. For reports that need detail rows (e.g., invoice with line items), you should either:
+> - Create your own controller that builds the data source (see the [example app](#example-custom-controller))
+> - Use the metadata-driven approach where SQL provides the data
+
+<a name="example-custom-controller"></a>
+#### Example: Custom controller with data source
+
+```java
+@RestController
+@RequestMapping("/reports")
+public class InvoiceReportController {
+
+    private final ReportEngine engine;
+    private final ExportService exportService;
+
+    // Auto-injected by jasper-framework-spring autoconfiguration
+    public InvoiceReportController(ReportEngine engine, ExportService exportService) {
+        this.engine = engine;
+        this.exportService = exportService;
+    }
+
+    @GetMapping("/invoice/{id}")
+    public ResponseEntity<byte[]> invoice(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "PDF") ExportFormat format) {
+
+        // Build your data source with real data
+        List<InvoiceItem> items = invoiceService.getItems(id);
+        Invoice invoice = invoiceService.getById(id);
+
+        ReportContext ctx = ReportContext.builder("reports/invoice.jrxml")
+                .parameter("invoiceNumber", invoice.getNumber())
+                .parameter("customerName", invoice.getCustomerName())
+                .dataSource(new JRBeanCollectionDataSource(items))
+                .build();
+
+        JasperPrint print = engine.generateReport(ctx);
+        byte[] bytes = exportService.exportToBytes(print, format);
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=invoice." + format.name().toLowerCase())
+                .body(bytes);
+    }
+}
+```
+
+#### Configuration
 
 ```yaml
 jasper:
@@ -1164,7 +1507,7 @@ jasper:
     async-thread-pool-size: 8       # thread pool for async jobs
 ```
 
-### Override a default bean
+#### Override a default bean
 
 ```java
 @Configuration
@@ -1179,27 +1522,72 @@ public class CustomReportConfig {
 }
 ```
 
+### Approach B: Manual bean wiring (no Spring adapter)
+
+Use any individual module and create beans yourself. See [Section 4 — Option B](#4--maven-dependencies) for full examples covering:
+- Export only (`jasper-framework-exporter`)
+- Composition (`jasper-framework-composition`)
+- Async jobs (`jasper-framework-async`)
+- Metadata-driven (`jasper-framework-metadata`)
+
 ---
 
 ## 15. ☕ Jakarta EE / CDI Integration
 
-### Setup
+There are **two approaches** to using Jasper Framework in Jakarta EE, just like Spring Boot:
+
+| Approach | When to use | Dependency |
+|---|---|---|
+| **A: Auto-producers** | You want zero-config setup with all core beans | `jasper-framework-jakarta` |
+| **B: Manual producers** | You only need specific modules, or want full control | Any individual module (e.g., `jasper-framework-composition`) |
+
+> 📖 See [Section 4 — Maven Dependencies](#4--maven-dependencies) for more examples of manual producer wiring.
+
+### Approach A: Auto-producers with `jasper-framework-jakarta`
 
 ```xml
 <dependency>
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework-jakarta</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
-### Auto-produced beans (via CDI `@Produces`)
+#### Auto-produced beans (via CDI `@Produces`)
 
-All `@ApplicationScoped`:
+All `@ApplicationScoped` — available for `@Inject` anywhere:
 - `ReportCompiler`, `ReportExecutor`, `ReportEngine`
 - `ReportRegistry`, `SubreportResolver`, `ExportService`
 
-### JSF backing bean example
+#### JAX-RS REST endpoint example
+
+```java
+@Path("/reports")
+@ApplicationScoped
+public class ReportResource {
+
+    @Inject private ReportEngine engine;
+    @Inject private ExportService exportService;
+
+    @GET
+    @Path("/invoice/{id}")
+    @Produces("application/pdf")
+    public Response generateInvoice(@PathParam("id") Long invoiceId) {
+        ReportContext ctx = ReportContext.builder("reports/invoice.jrxml")
+                .parameter("invoiceId", invoiceId)
+                .build();
+
+        JasperPrint print = engine.generateReport(ctx);
+        byte[] pdf = exportService.exportToBytes(print, ExportFormat.PDF);
+
+        return Response.ok(pdf)
+                .header("Content-Disposition", "attachment; filename=invoice.pdf")
+                .build();
+    }
+}
+```
+
+#### JSF backing bean example
 
 ```java
 @Named
@@ -1228,6 +1616,111 @@ public class InvoiceBean implements Serializable {
 }
 ```
 
+### Approach B: Manual CDI producers (no Jakarta adapter)
+
+Use any individual module and create CDI producers yourself. This is the Jakarta equivalent of Spring's `@Configuration` + `@Bean`.
+
+**Example: I only need multi-report merging**
+
+```xml
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-composition</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+
+@ApplicationScoped
+public class JasperProducer {
+
+    @Produces @ApplicationScoped
+    public ReportCompiler reportCompiler() {
+        return new ReportCompiler();
+    }
+
+    @Produces @ApplicationScoped
+    public ReportExecutor reportExecutor() {
+        return new ReportExecutor();
+    }
+
+    @Produces @ApplicationScoped
+    public ReportEngine reportEngine() {
+        return new ReportEngine(reportCompiler(), reportExecutor());
+    }
+
+    @Produces @ApplicationScoped
+    public ExportService exportService() {
+        return new ExportService();
+    }
+
+    @Produces @ApplicationScoped
+    public ReportComposer reportComposer() {
+        return new ReportComposer();
+    }
+
+    @Produces @ApplicationScoped
+    public ReportMergeService reportMergeService() {
+        return new ReportMergeService(reportComposer(), exportService());
+    }
+}
+```
+
+Then inject anywhere:
+
+```java
+@Path("/reports")
+@ApplicationScoped
+public class FinancialReportResource {
+
+    @Inject private ReportEngine engine;
+    @Inject private ReportMergeService mergeService;
+
+    @GET
+    @Path("/financial-package")
+    @Produces("application/pdf")
+    public Response generatePackage() {
+        JasperPrint balance = engine.generateReport(/* ... */);
+        JasperPrint income  = engine.generateReport(/* ... */);
+        byte[] pdf = mergeService.mergeAndExport("Financial Report",
+                ExportFormat.PDF, balance, income);
+
+        return Response.ok(pdf)
+                .header("Content-Disposition", "attachment; filename=financial.pdf")
+                .build();
+    }
+}
+```
+
+**Example: I only need PDF/XLSX/CSV export**
+
+```xml
+<dependency>
+    <groupId>com.jasperframework</groupId>
+    <artifactId>jasper-framework-exporter</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+@ApplicationScoped
+public class JasperProducer {
+
+    @Produces @ApplicationScoped
+    public ReportEngine reportEngine() {
+        return new ReportEngine();
+    }
+
+    @Produces @ApplicationScoped
+    public ExportService exportService() {
+        return new ExportService();
+    }
+}
+```
+
 ---
 
 ## 16. 🔨 Maven Plugin
@@ -1240,7 +1733,7 @@ Pre-compile `.jrxml` to `.jasper` during the build to catch template errors earl
         <plugin>
             <groupId>com.jasperframework</groupId>
             <artifactId>jasper-framework-maven-plugin</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
             <executions>
                 <execution>
                     <goals>

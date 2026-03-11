@@ -7,9 +7,9 @@ import com.jasperframework.core.ReportContext;
 import com.jasperframework.core.ReportEngine;
 import com.jasperframework.exporter.ExportService;
 import net.sf.jasperreports.engine.JasperPrint;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,11 +19,12 @@ import java.util.Map;
 /**
  * Auto-registered REST controller for report generation.
  * <p>
- * Activated only when Spring Web and the required beans are present.
+ * Activated only when Spring Web is on the classpath.
+ * The async job endpoint is only available when {@link ReportJobService} is present.
  *
  * <pre>
  * POST /reports/{code}?format=PDF    — generate report synchronously
- * GET  /reports/job/{id}              — check async job status
+ * GET  /reports/job/{id}              — check async job status (requires async module)
  * </pre>
  */
 @RestController
@@ -34,7 +35,12 @@ public class ReportRestController {
     private final ReportEngine engine;
     private final ExportService exportService;
     private final JasperFrameworkProperties properties;
-    private final ReportJobService jobService;
+    private final ReportJobService jobService; // nullable
+
+    public ReportRestController(ReportEngine engine, ExportService exportService,
+                                JasperFrameworkProperties properties) {
+        this(engine, exportService, properties, null);
+    }
 
     public ReportRestController(ReportEngine engine, ExportService exportService,
                                 JasperFrameworkProperties properties,
@@ -80,9 +86,14 @@ public class ReportRestController {
 
     /**
      * Returns the status of an async report job.
+     * Returns 404 if the async module is not available.
      */
     @GetMapping("/job/{id}")
-    public ResponseEntity<JobStatusResponse> jobStatus(@PathVariable String id) {
+    public ResponseEntity<?> jobStatus(@PathVariable String id) {
+        if (jobService == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Async module is not available"));
+        }
         ReportJob job = jobService.getJob(id);
         JobStatusResponse response = new JobStatusResponse(
                 job.getId(),

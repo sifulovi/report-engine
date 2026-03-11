@@ -118,7 +118,7 @@ cd report-engine
 <dependency>
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework-core</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -164,7 +164,7 @@ JasperPrint print = engine.generateReport(ctx);
 <dependency>
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework-spring</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 > Autoconfigures `ReportEngine`, `ExportService`, `ReportRegistry`, and REST endpoints.
@@ -175,7 +175,7 @@ JasperPrint print = engine.generateReport(ctx);
 <dependency>
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework-jakarta</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 > CDI producers for all core beans — just `@Inject` and use.
@@ -186,7 +186,7 @@ JasperPrint print = engine.generateReport(ctx);
 <dependency>
     <groupId>com.jasperframework</groupId>
     <artifactId>jasper-framework-exporter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 > Brings in core engine + all three exporters. No framework deps.
